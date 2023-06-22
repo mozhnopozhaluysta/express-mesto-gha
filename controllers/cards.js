@@ -22,15 +22,13 @@ module.exports.addNewCard = (req, res) => {
   Card.create({ name, link, owner })
     .then((card) => res.status(201).send(card))
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
+      if (err.name === 'ValidationError') {
         res.status(400).send({
-          message:
-            'Передача некорректных данных, при попытке добавления новой карточки на страницу.',
+          message: 'Передача некорректных данных при попытке добавления новой карточки на страницу.',
         });
       } else {
         res.status(500).send({
-          message:
-            'На сервере произошла ошибка',
+          message: 'На сервере произошла ошибка',
         });
       }
     });
