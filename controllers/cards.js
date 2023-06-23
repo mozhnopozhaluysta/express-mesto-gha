@@ -1,14 +1,20 @@
 const Card = require('../models/card');
 
+const { SUCCESS_CODE } = require('../utils/constants');
+const { CREATED_CODE } = require('../utils/constants');
+const { BAD_REQUEST_CODE } = require('../utils/constants');
+const { NOT_FOUND_CODE } = require('../utils/constants');
+const { INTERNAL_SERVER_ERROR } = require('../utils/constants');
+
 // Вывод массива карточек а страницу
 module.exports.getInitialCards = (req, res) => {
   Card.find({})
   // обработка успешного выполнения запроса.
   // Когда карточки успешно найдены,
-    .then((cards) => res.status(200).send(cards))
+    .then((cards) => res.status(SUCCESS_CODE).send(cards))
     // обработка ошибки при выполнении запроса.
     // Если произошла ошибка при поиске карточек, отправляется ответ
-    .catch(() => res.status(500).send({
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({
       message:
           'На сервере произошла ошибка',
     }));
@@ -16,18 +22,17 @@ module.exports.getInitialCards = (req, res) => {
 
 // Добавление новой карточки на страницу
 module.exports.addNewCard = (req, res) => {
-  console.log(req.user._id);
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
-    .then((card) => res.status(201).send(card))
+    .then((card) => res.status(CREATED_CODE).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({
+        res.status(BAD_REQUEST_CODE).send({
           message: 'Передача некорректных данных при попытке добавления новой карточки на страницу.',
         });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR).send({
           message: 'На сервере произошла ошибка',
         });
       }
@@ -40,19 +45,19 @@ module.exports.removeCard = (req, res) => {
     .then((card) => {
       if (!card) {
         return res
-          .status(404)
+          .status(NOT_FOUND_CODE)
           .send({ message: 'Карточка c передаваемым ID не найдена' });
       }
-      return res.status(200).send(card);
+      return res.status(SUCCESS_CODE).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({
+        res.status(BAD_REQUEST_CODE).send({
           message: 'Передача некорректных данных карточки.',
         });
       } else {
         res
-          .status(500)
+          .status(INTERNAL_SERVER_ERROR)
           .send({
             message:
               'На сервере произошла ошибка',
@@ -69,20 +74,20 @@ module.exports.addLike = (req, res) => {
     { new: true },
   )
     .orFail()
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.status(SUCCESS_CODE).send(card))
     .catch((err) => {
       if (err.name === 'DocumentNotFoundError') {
         return res
-          .status(404)
+          .status(NOT_FOUND_CODE)
           .send({ message: 'Карточка c передаваемым ID не найдена' });
       }
       if (err.name === 'CastError') {
-        return res.status(400).send({
+        return res.status(BAD_REQUEST_CODE).send({
           message: 'Передача некорректных данных при попытке поставить лайк.',
         });
       }
       return res
-        .status(500)
+        .status(INTERNAL_SERVER_ERROR)
         .send({
           message:
             'На сервере произошла ошибка',
@@ -98,21 +103,21 @@ module.exports.removeLike = (req, res) => {
     { new: true },
   )
     .orFail()
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.status(SUCCESS_CODE).send(card))
     .catch((err) => {
       if (err.name === 'DocumentNotFoundError') {
         return res
-          .status(404)
+          .status(NOT_FOUND_CODE)
           .send({ message: 'Карточка c передаваемым ID не найдена' });
       }
       if (err.name === 'CastError') {
-        return res.status(400).send({
+        return res.status(BAD_REQUEST_CODE).send({
           message:
             'Передача некорректных данных при попытке удаления лайка с карточки.',
         });
       }
       return res
-        .status(500)
+        .status(INTERNAL_SERVER_ERROR)
         .send({
           message:
             'На сервере произошла ошибка',

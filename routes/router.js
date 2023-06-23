@@ -1,6 +1,8 @@
 // Подключение модуля маршрутизации Express
 const router = require('express').Router();
 
+const { NOT_FOUND_CODE } = require('../utils/constants');
+
 // Подключение маршрутов для карточек
 const cardRoutes = require('./cards');
 // Подключение маршрутов для пользователей
@@ -13,7 +15,7 @@ router.use('/users', userRoutes);
 
 // Обработка запросов на несуществующие маршруты
 router.use('/*', (req, res) => {
-  res.status(404).send({ message: '404: Страница не найдена.' });
+  res.status(NOT_FOUND_CODE).send({ message: `${NOT_FOUND_CODE}: Страница не найдена.` });
 });
 
 // Экспорт модуля маршрутизации
