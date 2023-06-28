@@ -1,50 +1,55 @@
-// Подключение необходимых модулей и файлов
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
-const routes = require('./routes/router');
+const bodyParser = require('body-parser');
+const { errors } = require('celebrate');
 
-// Определение порта из переменной окружения или использование значения по умолчанию
+const limiter = require('./middlewares/rateLimiter');
+
+const routeSignup = require('./routes/signup');
+const routeSignin = require('./routes/signin');
+
+const auth = require('./middlewares/auth');
+
+const routeUsers = require('./routes/users');
+const routeCards = require('./routes/cards');
+
+const CustomNotFoundCode = require('./errors/CustomNotFoundCode');
+const errorHandler = require('./middlewares/errorHandler');
+
+const URL = 'mongodb://127.0.0.1:27017/mestodb';
 const { PORT = 3000 } = process.env;
 
-// Создание экземпляра приложения Express
-const app = express();
+mongoose.set('strictQuery', true);
 
-// Применение промежуточного ПО для обеспечения безопасности
-app.use(helmet());
-
-// Отключение заголовка "x-powered-by"
-app.disable('x-powered-by');
-
-// Парсинг JSON-запросов
-app.use(express.json());
-
-// Установка значения для свойства "user" в объекте "req"
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6492ce9bb6611714e33e4b48', /* {
-      "name": "Toma Bushtaeva",
-      "about": "Фронтенд разработчик",
-      "avatar": "https://cdn2.riastatic.com/photosnew/auto/photo/bmw_m6__473851217f.jpg"
-      } Данные пользователя созданы через POSTMAN успешно присвоен уникальный id пользователя */
-  };
-  next();
-});
-
-// Подключение маршрутов
-app.use(routes);
-
-// Подключение к базе данных MongoDB
 mongoose
-  .connect('mongodb://127.0.0.1:27017/mestodb')
+  .connect(URL)
   .then(() => {
     console.log('БД подключена');
   })
   .catch(() => {
-    console.log('Не удается подключиться к БД, проверьте правильность подключения');
+    console.log('Не удалось подключиться к БД');
   });
 
-// Запуск сервера на указанном порту
-app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
-});
+const app = express();
+
+app.use(helmet());
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(limiter);
+
+app.use('/', routeSignup);
+app.use('/', routeSignin);
+
+app.use(auth);
+
+app.use('/users', routeUsers);
+app.use('/cards', routeCards);
+
+app.use((req, res, next) => next(new CustomNotFoundCode('Запрашиваемый ресурс не найден.')));
+app.use(errors());
+app.use(errorHandler);
+
+app.listen(PORT);
